@@ -22,15 +22,16 @@
    LAYOUT: una columna: turno arriba, caja en el centro, sacadas debajo */
 :root{color-scheme:dark;--wood1:#3a2112;--wood2:#2a170c;--ink:#f6ead8;--muted:#cdb79c;--red:#c8261d;--red2:#8f160f;--yel:#f2c230;--stick:#e8c48a;--stick2:#c99a5b}
 *{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%}
-body{margin:0;color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow-x:clip;
+html{min-height:100%;background-color:var(--wood2);
+margin:0;color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow-x:clip;
  background:
  repeating-linear-gradient(92deg,rgba(0,0,0,.10) 0 2px,transparent 2px 23px),
  repeating-linear-gradient(88deg,rgba(255,220,170,.05) 0 1px,transparent 1px 41px),
- radial-gradient(120% 80% at 50% 35%,#5a3418 0%,var(--wood1) 45%,var(--wood2) 100%) fixed;
- user-select:none;-webkit-user-select:none}
-main{max-width:560px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom));min-height:100%;display:flex;flex-direction:column}
+ radial-gradient(120% 80% at 50% 35%,#5a3418 0%,var(--wood1) 45%,var(--wood2) 100%);background-attachment:scroll}
+body{margin:0;user-select:none;-webkit-user-select:none}
+main{max-width:560px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom));min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;justify-content:center}
 h1,.big{font-family:"Alfa Slab One",Georgia,serif;font-weight:400;line-height:1.05;margin:0;text-wrap:balance}
+h1,.sub{text-align:center}
 h1{font-size:clamp(32px,9vw,46px);color:var(--yel);text-shadow:0 3px 0 var(--red2)}
 .sub{color:var(--muted);margin:6px 0 22px}
 .hidden{display:none!important}
@@ -48,10 +49,10 @@ ul.players{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
 ul.players li{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:12px;padding:4px 4px 4px 14px;font-weight:600}
 ul.players li span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 ul.players li button{width:44px;min-height:44px;padding:0;font-size:20px;color:var(--muted);background:transparent}
-.empty{color:var(--muted);margin:14px 0 0;font-size:15px}
-.opt{display:flex;align-items:center;gap:12px;margin:16px 0 4px;color:var(--muted);cursor:pointer}
+.empty{color:var(--muted);margin:14px 0 0;font-size:15px;text-align:center}
+.opt{display:flex;align-items:center;justify-content:center;gap:12px;margin:16px 0 4px;color:var(--muted);cursor:pointer}
 .opt input{width:22px;height:22px;accent-color:var(--red)}
-.foot{margin-top:auto;padding-top:20px}
+.foot{padding-top:20px}
 .hint{color:var(--muted);font-size:14px;text-align:center;margin:10px 0 0}
 /* game */
 .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
@@ -103,7 +104,7 @@ ul.players li button{width:44px;min-height:44px;padding:0;font-size:20px;color:v
 .rank .bar i{display:block;height:100%;background:var(--red);border-radius:5px}
 .rank .bar i.me{background:var(--yel)}
 .rank b{width:2em;text-align:right;font-variant-numeric:tabular-nums}
-.stepper{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:16px 0 4px;color:var(--muted)}
+.stepper{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;margin:16px 0 4px;color:var(--muted)}
 .stepctl{display:flex;align-items:center;background:rgba(0,0,0,.35);border:1px solid rgba(255,220,170,.25);border-radius:12px}
 .stepctl button{width:44px;min-height:44px;padding:0;font-size:22px;background:transparent}
 .stepctl b{min-width:2em;text-align:center;font-family:"Alfa Slab One",serif;font-weight:400;font-size:22px;color:var(--yel)}
@@ -137,14 +138,12 @@ ul.players li button{width:44px;min-height:44px;padding:0;font-size:20px;color:v
    </form>
    <ul class="players" id="plist"></ul>
    <p class="empty" id="pempty">Añade al menos 2 jugadores.</p>
-   <div class="stepper"><span>Pierde quien llegue a</span>
-    <div class="stepctl"><button type="button" id="tMinus" aria-label="Menos">−</button><b id="tVal">1</b><button type="button" id="tPlus" aria-label="Más">+</button></div>
-    <span id="tLabel">derrota</span></div>
+   <div class="stepper"><span>Derrotas para perder</span>
+    <div class="stepctl"><button type="button" id="tMinus" aria-label="Menos">−</button><b id="tVal">1</b><button type="button" id="tPlus" aria-label="Más">+</button></div></div>
    <label class="opt"><input type="checkbox" id="shuffle" checked> Sortear el orden de los turnos</label>
   </div>
   <div class="foot">
    <button class="primary" id="startBtn" disabled>Jugar</button>
-   <p class="hint">En iPhone: Compartir → «Añadir a pantalla de inicio» para tenerlo como app.</p>
   </div>
  </section>
 
@@ -245,7 +244,6 @@ let target=1,session={},matchOver=true;
 try{target=Math.min(10,Math.max(1,+localStorage.getItem(TKEY)||1))}catch(e){}
 function renderTarget(){
  $('tVal').textContent=target;
- $('tLabel').textContent=target===1?'derrota (ronda única)':'derrotas';
  $('tMinus').disabled=target<=1;$('tPlus').disabled=target>=10;
 }
 function setTarget(v){target=Math.min(10,Math.max(1,v));try{localStorage.setItem(TKEY,target)}catch(e){}renderTarget()}
