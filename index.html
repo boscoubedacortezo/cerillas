@@ -91,7 +91,8 @@ ul.players li button{width:44px;min-height:44px;padding:0;font-size:20px;color:v
 @keyframes flick{from{transform:scale(1,1) rotate(-3deg)}to{transform:scale(.92,1.08) rotate(3deg)}}
 .glow{position:absolute;inset:-40px;pointer-events:none;opacity:0;transition:opacity .6s;background:radial-gradient(40% 35% at var(--gx,50%) 10%,rgba(255,170,60,.35),transparent 70%)}
 .glow.on{opacity:1}
-.drawn{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0 0;min-height:36px}
+.topr{display:flex;align-items:center;gap:8px}
+.iconbtn{width:44px;padding:0;display:grid;place-items:center;color:var(--yel)}
 .chip{background:rgba(255,255,255,.08);border-radius:999px;padding:6px 12px;font-size:14px;font-weight:600;white-space:nowrap}
 .chip.ok::before{content:"✓ ";color:#9fdc7a}
 .chip.ko{background:var(--red);color:#fff}
@@ -130,7 +131,6 @@ body.playing{position:fixed;inset:0;width:100%}
 body.playing main{height:100vh;height:100dvh;justify-content:flex-start}
 #game{display:flex;flex-direction:column;flex:1;min-height:0}
 #game .turn{margin:10px 0 2px}
-#game .drawn{margin:8px 0 0;min-height:0}
 html,body{touch-action:manipulation;overscroll-behavior:none}
 @media(prefers-reduced-motion:reduce){.m .stick{transition-duration:.01s}.m.lost .flame{animation:none}.result,.sheet{animation:none}}
 </style>
@@ -154,7 +154,7 @@ html,body{touch-action:manipulation;overscroll-behavior:none}
   </div>
   <div class="foot">
    <button class="primary" id="startBtn" disabled>Jugar</button>
-   <p class="ver" id="ver">v1.2 · 20 nov 2026, 13:21</p>
+   <p class="ver" id="ver">v1.3 · 20 nov 2026, 13:25</p>
   </div>
  </section>
 
@@ -162,9 +162,9 @@ html,body{touch-action:manipulation;overscroll-behavior:none}
  <section id="game" class="hidden">
   <div class="top">
    <button id="backBtn">← Jugadores</button>
-   <span class="chip" id="left"></span>
+   <div class="topr"><span class="chip" id="left"></span>
+   <button class="iconbtn" id="boardBtn" aria-label="Ver marcador"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 20V11h4v9zM10 20V5h4v15zM16 20v-6h4v6z" fill="currentColor"/></svg></button></div>
   </div>
-  <div class="scoreline" id="score"></div>
   <div class="turn"><small>Le toca a</small><div class="big" id="turnName"></div></div>
   <p class="status" id="status">Desliza una cerilla hacia arriba</p>
   <div class="stagewrap" id="stagewrap"><div class="stage" id="stage">
@@ -175,10 +175,17 @@ html,body{touch-action:manipulation;overscroll-behavior:none}
     <b>CERILLAS</b><i>SACA UNA · SI TE ATREVES</i>
    </div>
   </div></div>
-  <div class="drawn" id="drawn"></div>
  </section>
 </main>
 
+<div class="result hidden" id="board">
+ <div class="sheet">
+  <small id="boardSub"></small>
+  <div class="big" style="font-size:clamp(30px,9vw,42px)">Marcador</div>
+  <ul class="rank" id="boardRank" style="margin-top:14px"></ul>
+  <div class="row"><button class="primary" id="boardClose">Seguir jugando</button></div>
+ </div>
+</div>
 <div class="result hidden" id="result">
  <div class="sheet" id="sheet">
   <small id="resSmall">Ha sacado la cerilla corta</small>
@@ -244,9 +251,9 @@ const sfx={
   // chasquidos
   for(let i=0;i<10;i++)burst(a,t+0.35+Math.random()*1.4,0.03,'highpass',2500,1,0.15+Math.random()*0.2,0.003)}
 };
-function renderRank(loser,src,max){
+function renderRank(loser,src,max,el){
  max=max||Math.max(1,...players.map(p=>src[p]||0));
- $('rank').innerHTML=players.slice().sort((a,b)=>(src[b]||0)-(src[a]||0))
+ $(el||'rank').innerHTML=players.slice().sort((a,b)=>(src[b]||0)-(src[a]||0))
   .map(p=>{const n=src[p]||0;return `<li><span>${esc(p)}</span><div class="bar"><i class="${p===loser?'me':''}" style="width:${n/max*100}%"></i></div><b>${n}</b></li>`}).join('');
 }
 /* --- partida a N derrotas --- */
@@ -261,9 +268,15 @@ function setTarget(v){target=Math.min(10,Math.max(1,v));try{localStorage.setItem
 $('tMinus').addEventListener('click',()=>setTarget(target-1));
 $('tPlus').addEventListener('click',()=>setTarget(target+1));
 function renderScore(){
- if(target===1){$('score').innerHTML='';return}
- $('score').innerHTML=players.map(p=>{const n=session[p]||0;return `<span class="chip ${n===target-1?'warn':''}">${esc(p)} ${n}/${target}</span>`}).join('');
+ $('boardBtn').classList.toggle('hidden',target===1);
 }
+$('boardBtn').addEventListener('click',()=>{
+ $('boardSub').textContent=`Partida a ${target} derrotas`;
+ renderRank(null,session,target,'boardRank');
+ $('board').classList.remove('hidden');$('boardClose').focus();
+});
+$('boardClose').addEventListener('click',()=>$('board').classList.add('hidden'));
+$('board').addEventListener('click',e=>{if(e.target===$('board'))$('board').classList.add('hidden')});
 function newMatch(){session={};matchOver=false;newRound()}
 
 const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -309,7 +322,6 @@ function updateTurn(){
  $('status').textContent='Desliza una cerilla hacia arriba';
  const left=players.length-drawn.length;
  $('left').textContent=`${left} en la caja`;
- $('drawn').innerHTML=drawn.map(d=>`<span class="chip ${d.lost?'ko':'ok'}">${esc(d.name)}</span>`).join('');
 }
 /* --- sacar la cerilla deslizando --- */
 let drag=null;
