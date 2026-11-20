@@ -123,7 +123,8 @@ ul.players li button{width:44px;min-height:44px;padding:0;font-size:20px;color:v
 @keyframes fade{from{opacity:0}}@keyframes rise{from{transform:translateY(40px);opacity:0}}
 .stage{overflow:hidden;flex:none;transform-origin:50% 50%}
 .stagewrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
-body.playing{position:fixed;inset:0;overflow:hidden;overscroll-behavior:none}
+html.playing,body.playing{overflow:hidden;overscroll-behavior:none;height:100%}
+body.playing{position:fixed;inset:0;width:100%}
 body.playing main{height:100vh;height:100dvh;justify-content:flex-start}
 #game{display:flex;flex-direction:column;flex:1;min-height:0}
 #game .turn{margin:10px 0 2px}
@@ -297,7 +298,7 @@ function newRound(){
  $('glow').classList.remove('on');
  $('result').classList.add('hidden');
  $('setup').classList.add('hidden');$('game').classList.remove('hidden');
- document.body.classList.add('playing');
+ document.body.classList.add('playing');document.documentElement.classList.add('playing');window.scrollTo(0,0);
  renderScore();updateTurn();fit();
 }
 function updateTurn(){
@@ -366,8 +367,9 @@ function fit(){
  const k=Math.min(1,w.clientHeight/430,w.clientWidth/st.offsetWidth);
  st.style.transform=k<1?`scale(${k})`:'';
 }
+document.addEventListener('touchmove',e=>{if(document.body.classList.contains('playing'))e.preventDefault()},{passive:false});
 const fitRO=new ResizeObserver(fit);fitRO.observe($('stagewrap'));
-const toSetup=()=>{document.body.classList.remove('playing');$('result').classList.add('hidden');$('game').classList.add('hidden');$('setup').classList.remove('hidden');renderPlayers()};
+const toSetup=()=>{document.body.classList.remove('playing');document.documentElement.classList.remove('playing');$('result').classList.add('hidden');$('game').classList.add('hidden');$('setup').classList.remove('hidden');renderPlayers()};
 $('editBtn').addEventListener('click',toSetup);
 $('backBtn').addEventListener('click',toSetup);
 renderTarget();
