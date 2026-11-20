@@ -129,7 +129,8 @@ body.playing main{height:100vh;height:100dvh;justify-content:flex-start}
 #game{display:flex;flex-direction:column;flex:1;min-height:0}
 #game .turn{margin:10px 0 2px}
 #game .drawn{margin:8px 0 0;min-height:0}
-html,body{touch-action:manipulation}
+html,body{touch-action:manipulation;overscroll-behavior:none}
+html.playing,html.playing body{overflow:hidden;height:100%}
 @media(prefers-reduced-motion:reduce){.m .stick{transition-duration:.01s}.m.lost .flame{animation:none}.result,.sheet{animation:none}}
 </style>
 </head>
@@ -298,7 +299,7 @@ function newRound(){
  $('glow').classList.remove('on');
  $('result').classList.add('hidden');
  $('setup').classList.add('hidden');$('game').classList.remove('hidden');
- document.body.classList.add('playing');document.documentElement.classList.add('playing');window.scrollTo(0,0);
+ document.body.classList.add('playing');document.documentElement.classList.add('playing');document.documentElement.classList.add('playing');window.scrollTo(0,0);
  renderScore();updateTurn();fit();
 }
 function updateTurn(){
@@ -369,7 +370,9 @@ function fit(){
 }
 document.addEventListener('touchmove',e=>{if(document.body.classList.contains('playing'))e.preventDefault()},{passive:false});
 const fitRO=new ResizeObserver(fit);fitRO.observe($('stagewrap'));
-const toSetup=()=>{document.body.classList.remove('playing');document.documentElement.classList.remove('playing');$('result').classList.add('hidden');$('game').classList.add('hidden');$('setup').classList.remove('hidden');renderPlayers()};
+// iOS: bloquear el arrastre (rebote) mientras se juega
+document.addEventListener('touchmove',e=>{if(document.body.classList.contains('playing'))e.preventDefault()},{passive:false});
+const toSetup=()=>{document.body.classList.remove('playing');document.documentElement.classList.remove('playing');document.documentElement.classList.remove('playing');$('result').classList.add('hidden');$('game').classList.add('hidden');$('setup').classList.remove('hidden');renderPlayers()};
 $('editBtn').addEventListener('click',toSetup);
 $('backBtn').addEventListener('click',toSetup);
 renderTarget();
