@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cerillas">
+<meta name="theme-color" content="#2a170c">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>La cerilla corta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: tabernero, tenso y divertido; una mesa de bar al final de la cena
+   IDEA: una caja de cerillas de toda la vida sobre una mesa de madera
+   PICTURE: la caja roja y amarilla con las cabezas asomando; se tira de una y sale entera
+   COLOUR and TYPE: madera oscura dominante, rojo caja #c8261d, amarillo #f2c230 de acento; Alfa Slab One + Inter
+   LAYOUT: una columna: turno arriba, caja en el centro, sacadas debajo */
+:root{color-scheme:dark;--wood1:#3a2112;--wood2:#2a170c;--ink:#f6ead8;--muted:#cdb79c;--red:#c8261d;--red2:#8f160f;--yel:#f2c230;--stick:#e8c48a;--stick2:#c99a5b}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow-x:clip;
+ background:
+ repeating-linear-gradient(92deg,rgba(0,0,0,.10) 0 2px,transparent 2px 23px),
+ repeating-linear-gradient(88deg,rgba(255,220,170,.05) 0 1px,transparent 1px 41px),
+ radial-gradient(120% 80% at 50% 35%,#5a3418 0%,var(--wood1) 45%,var(--wood2) 100%) fixed;
+ user-select:none;-webkit-user-select:none}
+main{max-width:560px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom));min-height:100%;display:flex;flex-direction:column}
+h1,.big{font-family:"Alfa Slab One",Georgia,serif;font-weight:400;line-height:1.05;margin:0;text-wrap:balance}
+h1{font-size:clamp(32px,9vw,46px);color:var(--yel);text-shadow:0 3px 0 var(--red2)}
+.sub{color:var(--muted);margin:6px 0 22px}
+.hidden{display:none!important}
+button{font:600 16px Inter,sans-serif;border:0;border-radius:12px;min-height:48px;padding:0 18px;cursor:pointer;color:var(--ink);background:rgba(255,255,255,.08)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--yel);outline-offset:2px}
+.primary{background:var(--red);color:#fff;box-shadow:0 4px 0 var(--red2);font-size:18px;width:100%}
+.primary:active{transform:translateY(2px);box-shadow:0 2px 0 var(--red2)}
+.primary:disabled{opacity:.4}
+/* setup */
+.card{background:rgba(20,10,4,.55);border:1px solid rgba(255,220,170,.12);border-radius:18px;padding:16px}
+.addrow{display:flex;gap:8px}
+input[type=text]{flex:1;font:16px Inter,sans-serif;min-height:48px;border-radius:12px;border:1px solid rgba(255,220,170,.25);background:rgba(0,0,0,.35);color:var(--ink);padding:0 14px}
+.add{background:var(--yel);color:#2a170c;font-size:24px;width:52px;padding:0}
+ul.players{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px}
+ul.players li{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border-radius:12px;padding:4px 4px 4px 14px;font-weight:600}
+ul.players li span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ul.players li button{width:44px;min-height:44px;padding:0;font-size:20px;color:var(--muted);background:transparent}
+.empty{color:var(--muted);margin:14px 0 0;font-size:15px}
+.opt{display:flex;align-items:center;gap:12px;margin:16px 0 4px;color:var(--muted);cursor:pointer}
+.opt input{width:22px;height:22px;accent-color:var(--red)}
+.foot{margin-top:auto;padding-top:20px}
+.hint{color:var(--muted);font-size:14px;text-align:center;margin:10px 0 0}
+/* game */
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.top button{min-height:44px;font-size:15px}
+.turn{text-align:center;margin:18px 0 4px}
+.turn small{display:block;color:var(--muted);font-size:15px;letter-spacing:.02em}
+.turn .big{font-size:clamp(34px,10vw,50px);color:var(--ink)}
+.status{text-align:center;min-height:28px;font-weight:700;color:var(--yel);margin:0}
+.stage{position:relative;height:430px;margin:8px auto 0;width:min(100%,440px)}
+.matches{position:absolute;left:9%;right:9%;top:0;bottom:0;display:flex;justify-content:space-evenly}
+.m{position:relative;width:44px;height:100%;background:none;border-radius:0;padding:0;min-height:0}
+.m .stick{position:absolute;left:50%;top:200px;width:12px;margin-left:-6px;border-radius:2px;
+ background:linear-gradient(90deg,var(--stick2),var(--stick) 40%,#f3d7a6 55%,var(--stick2));box-shadow:2px 3px 6px rgba(0,0,0,.45);
+ transition:transform .95s cubic-bezier(.3,.05,.2,1)}
+.m .head{position:absolute;left:50%;top:-14px;width:20px;height:26px;margin-left:-10px;border-radius:50% 50% 45% 45%;
+ background:radial-gradient(60% 50% at 35% 30%,#ff7a5e,#c8261d 55%,#6e0f0a);box-shadow:0 2px 3px rgba(0,0,0,.4)}
+.m:not(:disabled):hover .stick{transform:translateY(-8px)}
+.m.pulled .stick{transform:translateY(var(--up))}
+.m.safe .stick{filter:saturate(.6) brightness(.85)}
+.m:disabled{cursor:default}
+.box{position:absolute;left:0;right:0;top:232px;bottom:0;border-radius:10px;pointer-events:none;
+ background:linear-gradient(180deg,#d8352a,var(--red) 30%,var(--red2));box-shadow:0 18px 30px rgba(0,0,0,.55),inset 0 2px 0 rgba(255,255,255,.25),inset 0 -6px 0 rgba(0,0,0,.2);
+ display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;overflow:hidden}
+.box::before{content:"";position:absolute;inset:14px;border:3px solid var(--yel);border-radius:6px}
+.box::after{content:"";position:absolute;left:0;right:0;bottom:0;height:22px;background:repeating-linear-gradient(90deg,#4a2a1a 0 3px,#6b3b22 3px 6px);opacity:.9}
+.box b{font-family:"Alfa Slab One",serif;font-weight:400;color:var(--yel);font-size:clamp(26px,8vw,38px);letter-spacing:.03em;text-shadow:0 2px 0 var(--red2);position:relative}
+.box i{font-style:normal;color:#ffe9b8;font-size:13px;letter-spacing:.12em;position:relative}
+.box .star{width:54px;height:54px;position:relative}
+/* flame */
+.flame{position:absolute;left:50%;top:-58px;width:30px;height:52px;margin-left:-15px;opacity:0;transform-origin:50% 100%;
+ background:radial-gradient(50% 60% at 50% 70%,#fff6c2,#ffc23a 40%,#ff6a1a 70%,transparent 72%);border-radius:50% 50% 40% 40%/70% 70% 30% 30%;filter:blur(.5px)}
+.m.lost .flame{opacity:1;animation:flick .12s infinite alternate}
+.m.lost .head{background:radial-gradient(#3a1a10,#140806)}
+@keyframes flick{from{transform:scale(1,1) rotate(-3deg)}to{transform:scale(.92,1.08) rotate(3deg)}}
+.glow{position:absolute;inset:-40px;pointer-events:none;opacity:0;transition:opacity .6s;background:radial-gradient(40% 35% at var(--gx,50%) 10%,rgba(255,170,60,.35),transparent 70%)}
+.glow.on{opacity:1}
+.drawn{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:14px 0 0;min-height:36px}
+.chip{background:rgba(255,255,255,.08);border-radius:999px;padding:6px 12px;font-size:14px;font-weight:600;white-space:nowrap}
+.chip.ok::before{content:"✓ ";color:#9fdc7a}
+.chip.ko{background:var(--red);color:#fff}
+.badge{font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap}
+.badge.hot{color:var(--yel)}
+.reset{background:transparent;color:var(--muted);font-size:14px;min-height:44px;padding:0 6px;text-decoration:underline}
+.cardhead{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.rank{list-style:none;margin:0 0 18px;padding:0;text-align:left;display:grid;gap:6px}
+.rank li{display:flex;align-items:center;gap:10px;font-weight:600}
+.rank li span{flex:0 0 7.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rank .bar{flex:1;height:10px;border-radius:5px;background:rgba(255,255,255,.08);overflow:hidden}
+.rank .bar i{display:block;height:100%;background:var(--red);border-radius:5px}
+.rank .bar i.me{background:var(--yel)}
+.rank b{width:2em;text-align:right;font-variant-numeric:tabular-nums}
+.stepper{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:16px 0 4px;color:var(--muted)}
+.stepctl{display:flex;align-items:center;background:rgba(0,0,0,.35);border:1px solid rgba(255,220,170,.25);border-radius:12px}
+.stepctl button{width:44px;min-height:44px;padding:0;font-size:22px;background:transparent}
+.stepctl b{min-width:2em;text-align:center;font-family:"Alfa Slab One",serif;font-weight:400;font-size:22px;color:var(--yel)}
+.scoreline{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0 0}
+.scoreline .chip{font-variant-numeric:tabular-nums}
+.scoreline .chip.warn{background:rgba(200,38,29,.45)}
+.sheet.final .big{color:#fff;text-shadow:0 3px 0 var(--red)}
+.ranktitle{color:var(--muted);font-size:14px;text-align:left;margin:0 0 8px}
+/* result */
+.result{position:fixed;inset:0;display:flex;align-items:flex-end;justify-content:center;background:rgba(10,4,1,.55);padding:18px;z-index:5;animation:fade .4s}
+.sheet{width:min(100%,520px);background:#1d0f07;border:1px solid rgba(255,220,170,.15);border-radius:22px;padding:22px 18px max(18px,env(safe-area-inset-bottom));text-align:center;animation:rise .45s cubic-bezier(.2,.8,.2,1)}
+.sheet small{color:var(--muted);font-size:15px}
+.sheet .big{font-size:clamp(36px,11vw,54px);color:var(--yel);margin:4px 0 6px;word-break:break-word}
+.sheet p{color:var(--muted);margin:0 0 18px}
+.sheet .row{display:grid;gap:10px}
+@keyframes fade{from{opacity:0}}@keyframes rise{from{transform:translateY(40px);opacity:0}}
+.stage{overflow:hidden}
+@media(prefers-reduced-motion:reduce){.m .stick{transition-duration:.01s}.m.lost .flame{animation:none}.result,.sheet{animation:none}}
+</style>
+</head>
+<body>
+<main>
+ <!-- SETUP -->
+ <section id="setup">
+  <h1>La cerilla corta</h1>
+  <p class="sub">Cada uno saca una cerilla por turnos. Quien saque la corta, pierde.</p>
+  <div class="card">
+   <form class="addrow" id="addForm" autocomplete="off">
+    <input type="text" id="nameIn" placeholder="Nombre del jugador" maxlength="18" enterkeyhint="done" aria-label="Nombre del jugador">
+    <button class="add" type="submit" aria-label="Añadir">+</button>
+   </form>
+   <ul class="players" id="plist"></ul>
+   <p class="empty" id="pempty">Añade al menos 2 jugadores.</p>
+   <div class="stepper"><span>Pierde quien llegue a</span>
+    <div class="stepctl"><button type="button" id="tMinus" aria-label="Menos">−</button><b id="tVal">1</b><button type="button" id="tPlus" aria-label="Más">+</button></div>
+    <span id="tLabel">derrota</span></div>
+   <label class="opt"><input type="checkbox" id="shuffle" checked> Sortear el orden de los turnos</label>
+  </div>
+  <div class="foot">
+   <button class="primary" id="startBtn" disabled>Jugar</button>
+   <p class="hint">En iPhone: Compartir → «Añadir a pantalla de inicio» para tenerlo como app.</p>
+  </div>
+ </section>
+
+ <!-- GAME -->
+ <section id="game" class="hidden">
+  <div class="top">
+   <button id="backBtn">← Jugadores</button>
+   <span class="chip" id="left"></span>
+  </div>
+  <div class="scoreline" id="score"></div>
+  <div class="turn"><small>Le toca a</small><div class="big" id="turnName"></div></div>
+  <p class="status" id="status">Toca una cerilla para sacarla</p>
+  <div class="stage" id="stage">
+   <div class="glow" id="glow"></div>
+   <div class="matches" id="matches"></div>
+   <div class="box">
+    <svg class="star" viewBox="0 0 54 54" aria-hidden="true"><circle cx="27" cy="27" r="25" fill="#f2c230"/><path d="M27 8l5 13h14l-11 8 4 14-12-8-12 8 4-14-11-8h14z" fill="#c8261d"/></svg>
+    <b>CERILLAS</b><i>SACA UNA · SI TE ATREVES</i>
+   </div>
+  </div>
+  <div class="drawn" id="drawn"></div>
+ </section>
+</main>
+
+<div class="result hidden" id="result">
+ <div class="sheet" id="sheet">
+  <small id="resSmall">Ha sacado la cerilla corta</small>
+  <div class="big" id="loserName"></div>
+  <p id="loserMsg"></p>
+  <p class="ranktitle" id="rankTitle">Derrotas acumuladas</p>
+  <ul class="rank" id="rank"></ul>
+  <div class="row">
+   <button class="primary" id="againBtn">Otra ronda</button>
+   <button id="editBtn">Cambiar jugadores</button>
+  </div>
+ </div>
+</div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const KEY='cerillas.players';
+const LONG=196,SHORT=82,HEAD_TOP=200;
+const quips=['Te toca pagar la ronda.','La suerte no estaba de tu lado.','Ni modo. Las reglas son las reglas.','Te ha quemado los dedos.','Sin trampa ni cartón.'];
+let players=[];
+try{players=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){players=[]}
+let order=[],turn=0,shortIdx=0,busy=false,drawn=[];
+
+/* --- sonido sintetizado (sin archivos) --- */
+let ac=null;
+function audio(){
+ try{
+  if(!ac)ac=new (window.AudioContext||window.webkitAudioContext)();
+  if(ac.state==='suspended')ac.resume();
+ }catch(e){return null}
+ return ac;
+}
+function noise(a,dur){
+ const b=a.createBuffer(1,Math.ceil(a.sampleRate*dur),a.sampleRate),d=b.getChannelData(0);
+ for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+ const s=a.createBufferSource();s.buffer=b;return s;
+}
+function burst(a,t,dur,type,freq,q,peak,attack){
+ const s=noise(a,dur),f=a.createBiquadFilter(),g=a.createGain();
+ f.type=type;f.frequency.value=freq;f.Q.value=q;
+ g.gain.setValueAtTime(0.0001,t);
+ g.gain.exponentialRampToValueAtTime(peak,t+attack);
+ g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+ s.connect(f).connect(g).connect(a.destination);s.start(t);s.stop(t+dur);
+ return f;
+}
+const sfx={
+ pull(){const a=audio();if(!a)return;const t=a.currentTime;
+  const f=burst(a,t,0.9,'bandpass',900,0.8,0.05,0.25);f.frequency.linearRampToValueAtTime(1700,t+0.9)},
+ safe(){const a=audio();if(!a)return;const t=a.currentTime;
+  const o=a.createOscillator(),g=a.createGain();o.type='triangle';
+  o.frequency.setValueAtTime(520,t);o.frequency.setValueAtTime(780,t+0.09);
+  g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.12,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+0.3);
+  o.connect(g).connect(a.destination);o.start(t);o.stop(t+0.32)},
+ strike(){const a=audio();if(!a)return;const t=a.currentTime;
+  // rascado
+  burst(a,t,0.22,'bandpass',3200,1.2,0.5,0.03);
+  // fogonazo
+  burst(a,t+0.16,1.1,'lowpass',1400,0.7,0.6,0.05);
+  // llama sostenida
+  burst(a,t+0.4,1.8,'lowpass',500,0.5,0.18,0.3);
+  // chasquidos
+  for(let i=0;i<10;i++)burst(a,t+0.35+Math.random()*1.4,0.03,'highpass',2500,1,0.15+Math.random()*0.2,0.003)}
+};
+function renderRank(loser,src,max){
+ max=max||Math.max(1,...players.map(p=>src[p]||0));
+ $('rank').innerHTML=players.slice().sort((a,b)=>(src[b]||0)-(src[a]||0))
+  .map(p=>{const n=src[p]||0;return `<li><span>${esc(p)}</span><div class="bar"><i class="${p===loser?'me':''}" style="width:${n/max*100}%"></i></div><b>${n}</b></li>`}).join('');
+}
+/* --- partida a N derrotas --- */
+const TKEY='cerillas.target';
+let target=1,session={},matchOver=true;
+try{target=Math.min(10,Math.max(1,+localStorage.getItem(TKEY)||1))}catch(e){}
+function renderTarget(){
+ $('tVal').textContent=target;
+ $('tLabel').textContent=target===1?'derrota (ronda única)':'derrotas';
+ $('tMinus').disabled=target<=1;$('tPlus').disabled=target>=10;
+}
+function setTarget(v){target=Math.min(10,Math.max(1,v));try{localStorage.setItem(TKEY,target)}catch(e){}renderTarget()}
+$('tMinus').addEventListener('click',()=>setTarget(target-1));
+$('tPlus').addEventListener('click',()=>setTarget(target+1));
+function renderScore(){
+ if(target===1){$('score').innerHTML='';return}
+ $('score').innerHTML=players.map(p=>{const n=session[p]||0;return `<span class="chip ${n===target-1?'warn':''}">${esc(p)} ${n}/${target}</span>`}).join('');
+}
+function newMatch(){session={};matchOver=false;newRound()}
+
+const esc=s=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(players))}catch(e){}};
+const buzz=p=>{try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}};
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+
+function renderPlayers(){
+ $('plist').innerHTML=players.map((p,i)=>{return `<li><span>${esc(p)}</span><button data-i="${i}" aria-label="Quitar ${esc(p)}">×</button></li>`}).join('');
+ $('pempty').classList.toggle('hidden',players.length>0);
+ $('pempty').textContent='Añade al menos 2 jugadores.';
+ $('startBtn').disabled=players.length<2;
+ $('startBtn').textContent=players.length<2?'Jugar':`Jugar · ${players.length} cerillas`;
+}
+$('addForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ const v=$('nameIn').value.trim();
+ if(!v)return;
+ if(players.length>=12){$('pempty').classList.remove('hidden');$('pempty').textContent='Máximo 12 jugadores.';return}
+ players.push(v);$('nameIn').value='';save();renderPlayers();
+});
+$('plist').addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ players.splice(+b.dataset.i,1);save();renderPlayers();
+});
+
+function newRound(){
+ order=$('shuffle').checked?shuffle(players):players.slice();
+ turn=0;drawn=[];busy=false;
+ shortIdx=Math.floor(Math.random()*players.length);
+ $('matches').innerHTML=players.map((_,i)=>{
+  const len=i===shortIdx?SHORT:LONG;
+  return `<button class="m" data-i="${i}" aria-label="Cerilla ${i+1}" style="--up:${-(len-14)}px"><span class="stick" style="height:${len}px"><span class="flame"></span><span class="head"></span></span></button>`;
+ }).join('');
+ $('glow').classList.remove('on');
+ $('result').classList.add('hidden');
+ $('setup').classList.add('hidden');$('game').classList.remove('hidden');
+ renderScore();updateTurn();
+}
+function updateTurn(){
+ $('turnName').textContent=order[turn];
+ $('status').textContent='Toca una cerilla para sacarla';
+ const left=players.length-drawn.length;
+ $('left').textContent=`${left} en la caja`;
+ $('drawn').innerHTML=drawn.map(d=>`<span class="chip ${d.lost?'ko':'ok'}">${esc(d.name)}</span>`).join('');
+}
+$('matches').addEventListener('click',e=>{
+ const m=e.target.closest('.m');
+ if(!m||busy||m.disabled)return;
+ busy=true;m.disabled=true;
+ const i=+m.dataset.i,name=order[turn],lost=i===shortIdx;
+ $('status').textContent=`${name} está sacando…`;
+ m.classList.add('pulled');buzz(30);sfx.pull();
+ setTimeout(()=>{
+  drawn.push({name,lost});
+  if(lost){
+   m.classList.add('lost');
+   const r=m.getBoundingClientRect(),s=$('stage').getBoundingClientRect();
+   $('glow').style.setProperty('--gx',((r.left+r.width/2-s.left)/s.width*100)+'%');
+   $('glow').classList.add('on');
+   $('status').textContent='¡La corta!';
+   buzz([120,60,220]);sfx.strike();
+   session[name]=(session[name]||0)+1;matchOver=session[name]>=target;renderScore();
+   document.querySelectorAll('.m').forEach(x=>x.disabled=true);
+   updateTurn();$('left').textContent='Ronda terminada';
+   setTimeout(()=>{
+    $('loserName').textContent=name;
+    const q=quips[Math.floor(Math.random()*quips.length)];
+    $('sheet').classList.toggle('final',matchOver&&target>1);
+    $('rankTitle').classList.toggle('hidden',target===1);$('rank').classList.toggle('hidden',target===1);
+    if(target===1){
+     $('resSmall').textContent='Ha sacado la cerilla corta';
+     $('loserMsg').textContent=q;
+     $('againBtn').textContent='Otra ronda';
+    }else if(matchOver){
+     $('resSmall').textContent=`¡Pierde la partida a ${target}!`;
+     $('loserMsg').textContent=`Ha llegado a ${target} derrotas. ${q}`;
+     $('rankTitle').textContent='Resultado final';
+     renderRank(name,session,target);
+     $('againBtn').textContent='Nueva partida';
+    }else{
+     const left=target-session[name];
+     $('resSmall').textContent='Ha sacado la cerilla corta';
+     $('loserMsg').textContent=left===1?`¡Cuidado! Una más y pierde la partida.`:`Le faltan ${left} para perder la partida.`;
+     $('rankTitle').textContent=`Partida a ${target} derrotas`;
+     renderRank(name,session,target);
+     $('againBtn').textContent='Siguiente ronda';
+    }
+    $('result').classList.remove('hidden');
+    $('againBtn').focus();
+   },1100);
+  }else{
+   m.classList.add('safe');sfx.safe();
+   $('status').textContent=`${name} se salva`;
+   setTimeout(()=>{turn++;busy=false;updateTurn()},900);
+  }
+ },1000);
+});
+$('startBtn').addEventListener('click',newMatch);
+$('againBtn').addEventListener('click',()=>matchOver?newMatch():newRound());
+const toSetup=()=>{$('result').classList.add('hidden');$('game').classList.add('hidden');$('setup').classList.remove('hidden');renderPlayers()};
+$('editBtn').addEventListener('click',toSetup);
+$('backBtn').addEventListener('click',toSetup);
+renderTarget();
+renderPlayers();
+}
+</script>
+</body>
+</html>
