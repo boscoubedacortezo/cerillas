@@ -121,7 +121,14 @@ ul.players li button{width:44px;min-height:44px;padding:0;font-size:20px;color:v
 .sheet p{color:var(--muted);margin:0 0 18px}
 .sheet .row{display:grid;gap:10px}
 @keyframes fade{from{opacity:0}}@keyframes rise{from{transform:translateY(40px);opacity:0}}
-.stage{overflow:hidden}
+.stage{overflow:hidden;flex:none;transform-origin:50% 50%}
+.stagewrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+body.playing{position:fixed;inset:0;overflow:hidden;overscroll-behavior:none}
+body.playing main{height:100vh;height:100dvh;justify-content:flex-start}
+#game{display:flex;flex-direction:column;flex:1;min-height:0}
+#game .turn{margin:10px 0 2px}
+#game .drawn{margin:8px 0 0;min-height:0}
+html,body{touch-action:manipulation}
 @media(prefers-reduced-motion:reduce){.m .stick{transition-duration:.01s}.m.lost .flame{animation:none}.result,.sheet{animation:none}}
 </style>
 </head>
@@ -156,14 +163,14 @@ ul.players li button{width:44px;min-height:44px;padding:0;font-size:20px;color:v
   <div class="scoreline" id="score"></div>
   <div class="turn"><small>Le toca a</small><div class="big" id="turnName"></div></div>
   <p class="status" id="status">Toca una cerilla para sacarla</p>
-  <div class="stage" id="stage">
+  <div class="stagewrap" id="stagewrap"><div class="stage" id="stage">
    <div class="glow" id="glow"></div>
    <div class="matches" id="matches"></div>
    <div class="box">
     <svg class="star" viewBox="0 0 54 54" aria-hidden="true"><circle cx="27" cy="27" r="25" fill="#f2c230"/><path d="M27 8l5 13h14l-11 8 4 14-12-8-12 8 4-14-11-8h14z" fill="#c8261d"/></svg>
     <b>CERILLAS</b><i>SACA UNA · SI TE ATREVES</i>
    </div>
-  </div>
+  </div></div>
   <div class="drawn" id="drawn"></div>
  </section>
 </main>
@@ -290,7 +297,8 @@ function newRound(){
  $('glow').classList.remove('on');
  $('result').classList.add('hidden');
  $('setup').classList.add('hidden');$('game').classList.remove('hidden');
- renderScore();updateTurn();
+ document.body.classList.add('playing');
+ renderScore();updateTurn();fit();
 }
 function updateTurn(){
  $('turnName').textContent=order[turn];
@@ -353,7 +361,13 @@ $('matches').addEventListener('click',e=>{
 });
 $('startBtn').addEventListener('click',newMatch);
 $('againBtn').addEventListener('click',()=>matchOver?newMatch():newRound());
-const toSetup=()=>{$('result').classList.add('hidden');$('game').classList.add('hidden');$('setup').classList.remove('hidden');renderPlayers()};
+function fit(){
+ const w=$('stagewrap'),st=$('stage');
+ const k=Math.min(1,w.clientHeight/430,w.clientWidth/st.offsetWidth);
+ st.style.transform=k<1?`scale(${k})`:'';
+}
+const fitRO=new ResizeObserver(fit);fitRO.observe($('stagewrap'));
+const toSetup=()=>{document.body.classList.remove('playing');$('result').classList.add('hidden');$('game').classList.add('hidden');$('setup').classList.remove('hidden');renderPlayers()};
 $('editBtn').addEventListener('click',toSetup);
 $('backBtn').addEventListener('click',toSetup);
 renderTarget();
