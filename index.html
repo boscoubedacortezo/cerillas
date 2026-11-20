@@ -70,7 +70,8 @@ ul.players li button{width:44px;min-height:44px;padding:0;font-size:20px;color:v
  transition:transform .95s cubic-bezier(.3,.05,.2,1)}
 .m .head{position:absolute;left:50%;top:-14px;width:20px;height:26px;margin-left:-10px;border-radius:50% 50% 45% 45%;
  background:radial-gradient(60% 50% at 35% 30%,#ff7a5e,#c8261d 55%,#6e0f0a);box-shadow:0 2px 3px rgba(0,0,0,.4)}
-.m:not(:disabled):hover .stick{transform:translateY(-8px)}
+.m{touch-action:none;cursor:grab}
+.m.dragging .stick{transition:none}
 .m.pulled .stick{transform:translateY(var(--up))}
 .m.safe .stick{filter:saturate(.6) brightness(.85)}
 .m:disabled{cursor:default}
@@ -153,7 +154,7 @@ html,body{touch-action:manipulation;overscroll-behavior:none}
   </div>
   <div class="foot">
    <button class="primary" id="startBtn" disabled>Jugar</button>
-   <p class="ver" id="ver">v1.0 · 20 nov 2026, 13:12</p>
+   <p class="ver" id="ver">v1.1 · 20 nov 2026, 13:18</p>
   </div>
  </section>
 
@@ -165,7 +166,7 @@ html,body{touch-action:manipulation;overscroll-behavior:none}
   </div>
   <div class="scoreline" id="score"></div>
   <div class="turn"><small>Le toca a</small><div class="big" id="turnName"></div></div>
-  <p class="status" id="status">Toca una cerilla para sacarla</p>
+  <p class="status" id="status">Desliza una cerilla hacia arriba</p>
   <div class="stagewrap" id="stagewrap"><div class="stage" id="stage">
    <div class="glow" id="glow"></div>
    <div class="matches" id="matches"></div>
@@ -305,14 +306,43 @@ function newRound(){
 }
 function updateTurn(){
  $('turnName').textContent=order[turn];
- $('status').textContent='Toca una cerilla para sacarla';
+ $('status').textContent='Desliza una cerilla hacia arriba';
  const left=players.length-drawn.length;
  $('left').textContent=`${left} en la caja`;
  $('drawn').innerHTML=drawn.map(d=>`<span class="chip ${d.lost?'ko':'ok'}">${esc(d.name)}</span>`).join('');
 }
-$('matches').addEventListener('click',e=>{
+/* --- sacar la cerilla deslizando --- */
+let drag=null;
+const stickOf=m=>m.querySelector('.stick');
+$('matches').addEventListener('pointerdown',e=>{
  const m=e.target.closest('.m');
- if(!m||busy||m.disabled)return;
+ if(!m||busy||m.disabled||drag)return;
+ e.preventDefault();
+ try{m.setPointerCapture(e.pointerId)}catch(_){}
+ const max=-parseFloat(m.style.getPropertyValue('--up'));
+ drag={m,id:e.pointerId,y0:e.clientY,max,up:0,hitEnd:false};
+ m.classList.add('dragging');audio();
+ $('status').textContent=`${order[turn]} está sacando…`;
+});
+$('matches').addEventListener('pointermove',e=>{
+ if(!drag||e.pointerId!==drag.id)return;
+ const up=Math.max(0,Math.min(drag.max,(drag.y0-e.clientY)/scaleK));
+ drag.up=up;stickOf(drag.m).style.transform=`translateY(${-up}px)`;
+ if(up>=drag.max&&!drag.hitEnd){drag.hitEnd=true;buzz(15)}
+});
+function endDrag(e){
+ if(!drag||e.pointerId!==drag.id)return;
+ const {m,up}=drag;drag=null;
+ m.classList.remove('dragging');
+ const st=stickOf(m);
+ if(up>=40){st.style.transform='';pull(m,true)}
+ else{st.style.transform='';$('status').textContent='Desliza una cerilla hacia arriba'}
+}
+$('matches').addEventListener('pointerup',endDrag);
+$('matches').addEventListener('pointercancel',endDrag);
+// teclado (Intro/Espacio): sigue funcionando con un toque
+$('matches').addEventListener('click',e=>{const m=e.target.closest('.m');if(m&&e.detail===0&&!busy&&!m.disabled)pull(m,false)});
+function pull(m,fromDrag){
  busy=true;m.disabled=true;
  const i=+m.dataset.i,name=order[turn],lost=i===shortIdx;
  $('status').textContent=`${name} está sacando…`;
@@ -360,13 +390,14 @@ $('matches').addEventListener('click',e=>{
    $('status').textContent=`${name} se salva`;
    setTimeout(()=>{turn++;busy=false;updateTurn()},900);
   }
- },1000);
-});
+ },fromDrag?700:1000);
+}
 $('startBtn').addEventListener('click',newMatch);
 $('againBtn').addEventListener('click',()=>matchOver?newMatch():newRound());
+let scaleK=1;
 function fit(){
  const w=$('stagewrap'),st=$('stage');
- const k=Math.min(1,w.clientHeight/430,w.clientWidth/st.offsetWidth);
+ const k=Math.min(1,w.clientHeight/430,w.clientWidth/st.offsetWidth);scaleK=k||1;
  st.style.transform=k<1?`scale(${k})`:'';
 }
 document.addEventListener('touchmove',e=>{if(document.body.classList.contains('playing'))e.preventDefault()},{passive:false});
