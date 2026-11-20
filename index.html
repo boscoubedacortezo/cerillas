@@ -154,7 +154,7 @@ html,body{touch-action:manipulation;overscroll-behavior:none}
   </div>
   <div class="foot">
    <button class="primary" id="startBtn" disabled>Jugar</button>
-   <p class="ver" id="ver">v1.1 · 20 nov 2026, 13:18</p>
+   <p class="ver" id="ver">v1.2 · 20 nov 2026, 13:21</p>
   </div>
  </section>
 
@@ -197,7 +197,7 @@ html,body{touch-action:manipulation;overscroll-behavior:none}
 {
 const $=id=>document.getElementById(id);
 const KEY='cerillas.players';
-const LONG=196,SHORT=82,HEAD_TOP=200;
+const LONG=196,SHORT=Math.round(LONG*0.7),HEAD_TOP=200,COMMIT=LONG*0.5;
 const quips=['Te toca pagar la ronda.','La suerte no estaba de tu lado.','Ni modo. Las reglas son las reglas.','Te ha quemado los dedos.','Sin trampa ni cartón.'];
 let players=[];
 try{players=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){players=[]}
@@ -327,16 +327,18 @@ $('matches').addEventListener('pointerdown',e=>{
 $('matches').addEventListener('pointermove',e=>{
  if(!drag||e.pointerId!==drag.id)return;
  const up=Math.max(0,Math.min(drag.max,(drag.y0-e.clientY)/scaleK));
+ if(up>=COMMIT){ // pasado el 50%: ya no se puede devolver, sale sola
+  const m=drag.m;try{m.releasePointerCapture(drag.id)}catch(_){}
+  drag=null;m.classList.remove('dragging');stickOf(m).style.transform='';pull(m,true);return;
+ }
  drag.up=up;stickOf(drag.m).style.transform=`translateY(${-up}px)`;
- if(up>=drag.max&&!drag.hitEnd){drag.hitEnd=true;buzz(15)}
 });
 function endDrag(e){
  if(!drag||e.pointerId!==drag.id)return;
- const {m,up}=drag;drag=null;
+ const {m}=drag;drag=null;
  m.classList.remove('dragging');
- const st=stickOf(m);
- if(up>=40){st.style.transform='';pull(m,true)}
- else{st.style.transform='';$('status').textContent='Desliza una cerilla hacia arriba'}
+ stickOf(m).style.transform='';
+ $('status').textContent='Desliza una cerilla hacia arriba';
 }
 $('matches').addEventListener('pointerup',endDrag);
 $('matches').addEventListener('pointercancel',endDrag);
